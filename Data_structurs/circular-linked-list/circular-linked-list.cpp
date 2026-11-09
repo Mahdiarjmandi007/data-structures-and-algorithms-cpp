@@ -46,6 +46,10 @@ void insert_eotl(int value){
 }
 
 void Delete(int value){
+    if (head == NULL) {
+    cout << "List is empty\n";
+    return;
+}
     node* curr =head;
     node* prev= NULL;
     if (head->data==value){
@@ -77,9 +81,34 @@ void Delete(int value){
     }
 }
 
+int search(int value){
+    if (head == NULL) {
+        cout << "List is empty\n";
+        return -1;
+    }
+
+    node* curr = head;
+    int count = 0;
+
+    do {
+        if (curr->data == value) {
+            return count;
+        }
+
+        curr = curr->next;
+        count++;
+
+    } while (curr != head);
+
+    return -1;
+}
+
+
+
 void Display(){
     if (head==NULL){
         cout << "list is empty";
+        return;
     }
     node* x =head;
     cout << "link list:\n";
@@ -93,7 +122,7 @@ void Display(){
 int main(){
     int choice,value;
     while(1){
-        cout << "Menu\n 1.Insert First Of The List\n 2.Insert End Of The List\n 3.Delete value \n 4.Display\n 5.Exit\n";
+        cout << "Menu\n 1.Insert First Of The List\n 2.Insert End Of The List\n 3.Delete value\n 4.search\n 5.Display\n 6.Exit\n";
         cout << "Enter The choice:";
         cin >> choice;
         system("cls");
@@ -117,10 +146,28 @@ int main(){
                 Delete(value);
                 system("cls");
                 break;
-            case 4:
+            case 4:{
+                Display();
+
+                cout << "Enter The Value You Want to search: ";
+                cin >> value;
+                int index = search(value); 
+                if (index != -1) {
+                    cout << "The index of value: " << index << endl;
+                }
+                else {
+                    cout << "Value not found!\n";
+                }
+
+                char wait;
+                cout << "Press any key to return: ";
+                cin >> wait;
+                break;
+            }
+            case 5:
                 Display();
                 break;
-            case 5:
+            case 6:
                 return 0;
             default:
                 cout << "invalid number!!\n";

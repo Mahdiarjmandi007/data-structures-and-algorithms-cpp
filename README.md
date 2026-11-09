@@ -67,10 +67,8 @@ data-structures-and-algorithms-cpp
 #### Algorithms
 - [x] Binary Search
 - [ ] Merge Sort
-- [ ] Quick Sort
+- [x] Quick Sort
 - [ ] Linear Search
-- [ ] Merge Sort
-- [ ] Quick Sort
 - [ ] Bubble Sort
 
 ## Technologies
