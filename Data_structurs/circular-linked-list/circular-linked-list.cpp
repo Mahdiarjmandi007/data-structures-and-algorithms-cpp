@@ -127,8 +127,56 @@ void revers(){
     head = curr;
 }
 
+int get_length(){
+    if (head==NULL){
+        cout << "list is empty";
+        return 0;
+    }
+    node* curr = head;
+    int count=0;
+    do{
+        curr=curr->next;
+        count++;
 
+    }while(curr!=head);
+    return count;
+}
+// 1 2 3 4 5
+void insert_at_position(int position, int value) {
 
+    int length = get_length();
+
+    if (position < 0 || position > length) {
+        cout << "Out of range\n";
+        return;
+    }
+
+    if (position == 0) {
+        insert_fotl(value);
+        return;
+    }
+
+    if (position == length) {
+        insert_eotl(value);
+        return;
+    }
+
+    node* curr = head;
+    node* prev = NULL;
+    int count = 0;
+
+    while (count < position) {
+        prev = curr;
+        curr = curr->next;
+        count++;
+    }
+
+    node* newnode = new node;
+    newnode->data = value;
+
+    prev->next = newnode;
+    newnode->next = curr;
+}
 
 void Display(){
     if (head==NULL){
@@ -147,7 +195,7 @@ void Display(){
 int main(){
     int choice,value;
     while(1){
-        cout << "Menu\n 1.Insert First Of The List\n 2.Insert End Of The List\n 3.Delete value\n 4.search\n 5.revers\n 6.Display\n 7.Exit\n";
+        cout << "Menu\n 1.Insert First Of The List\n 2.Insert End Of The List\n 3.Delete value\n 4.search\n 5.revers\n 6.length\n 7.insert at possition\n  8.Display\n 9.Exit\n";
         cout << "Enter The choice:";
         cin >> choice;
         system("cls");
@@ -197,10 +245,33 @@ int main(){
                 cout << "After ";
                 Display();
                 break;
+
             case 6:
+                system("cls");
+                cout<<"\nlength of list: " << get_length();
+
+                char wait;
+                cout << "\nPress any key to return: \n";
+                cin >> wait;
+                system("cls");
+                break;
+
+            case 7:{
+                int value;
+                int possition;
+                cout <<"\ninsert at possition\n" << "enter the value: \n";
+                cin >> value;
+                cout << "enter the possition\n";
+                cin >> possition;
+
+                insert_at_position(possition,value);
+                break;
+
+            }
+            case 8:
                 Display();
                 break;
-            case 7:
+            case 9:
                 return 0;
             default:
                 cout << "invalid number!!\n";
