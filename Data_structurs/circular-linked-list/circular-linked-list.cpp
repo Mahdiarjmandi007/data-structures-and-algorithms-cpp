@@ -104,6 +104,31 @@ int search(int value){
 }
 
 
+void revers(){
+    if (head == NULL) {
+        cout << "List is empty\n";
+        return;
+    }
+
+    node* temp;
+    node* prev = NULL;
+    node* curr = head;
+    node* last = head;
+
+    while (curr->next != head){
+        temp = curr->next;
+        curr->next = prev;
+        prev = curr;
+        curr = temp;
+    }
+
+    curr->next = prev;
+    head->next = curr;
+    head = curr;
+}
+
+
+
 
 void Display(){
     if (head==NULL){
@@ -122,7 +147,7 @@ void Display(){
 int main(){
     int choice,value;
     while(1){
-        cout << "Menu\n 1.Insert First Of The List\n 2.Insert End Of The List\n 3.Delete value\n 4.search\n 5.Display\n 6.Exit\n";
+        cout << "Menu\n 1.Insert First Of The List\n 2.Insert End Of The List\n 3.Delete value\n 4.search\n 5.revers\n 6.Display\n 7.Exit\n";
         cout << "Enter The choice:";
         cin >> choice;
         system("cls");
@@ -160,14 +185,22 @@ int main(){
                 }
 
                 char wait;
-                cout << "Press any key to return: ";
+                cout << "Press any key to return: \n";
                 cin >> wait;
+                system("cls");
                 break;
             }
             case 5:
+                cout << "Befor ";                
+                Display();
+                revers();
+                cout << "After ";
                 Display();
                 break;
             case 6:
+                Display();
+                break;
+            case 7:
                 return 0;
             default:
                 cout << "invalid number!!\n";
