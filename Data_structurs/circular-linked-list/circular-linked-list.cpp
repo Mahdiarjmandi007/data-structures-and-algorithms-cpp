@@ -178,6 +178,38 @@ void insert_at_position(int position, int value) {
     newnode->next = curr;
 }
 
+void delete_at_position(int position){
+    int length = get_length();
+
+    if (position < 0 || position >= length) {
+        cout << "Out of range\n";
+        return;
+    }
+
+    if (position == 0) {
+        Delete(head->data);
+        return;
+    }
+
+    node* curr = head;
+    node* prev = NULL;
+    int count = 0;
+
+    while (count < position) {
+        prev = curr;
+        curr = curr->next;
+        count++;
+    }
+    if (position == length - 1 ) {
+        prev->next =  head;
+        delete curr;
+        return;
+    }
+    prev->next = curr->next;
+    delete curr;
+        
+}
+
 void Display(){
     if (head==NULL){
         cout << "list is empty";
@@ -195,7 +227,7 @@ void Display(){
 int main(){
     int choice,value;
     while(1){
-        cout << "Menu\n 1.Insert First Of The List\n 2.Insert End Of The List\n 3.Delete value\n 4.search\n 5.revers\n 6.length\n 7.insert at possition\n  8.Display\n 9.Exit\n";
+        cout << "Menu\n 1.Insert First Of The List\n 2.Insert End Of The List\n 3.Delete value\n 4.search\n 5.revers\n 6.length\n 7.insert at possition\n 8.delete at position\n  9.Display\n 10.Exit\n";
         cout << "Enter The choice:";
         cin >> choice;
         system("cls");
@@ -258,20 +290,27 @@ int main(){
 
             case 7:{
                 int value;
-                int possition;
-                cout <<"\ninsert at possition\n" << "enter the value: \n";
+                int position;
+                cout <<"\ninsert at position\n" << "enter the value: \n";
                 cin >> value;
-                cout << "enter the possition\n";
-                cin >> possition;
+                cout << "enter the position\n";
+                cin >> position;
 
-                insert_at_position(possition,value);
+                insert_at_position(position,value);
                 break;
 
             }
-            case 8:
+            case 8: {
+                int position;
+                cout <<"\n delete at position\n" << "enter the position: \n";
+                cin >> position;
+                delete_at_position(position);
+                break;
+            }
+            case 9:
                 Display();
                 break;
-            case 9:
+            case 10:
                 return 0;
             default:
                 cout << "invalid number!!\n";
