@@ -20,6 +20,15 @@ The "are these two vertices already connected?" question is answered by a **disj
 
 This folder currently contains the graph model and a raylib GUI for building weighted graphs. The actual Kruskal implementation is the next step.
 
+## Two Versions
+
+This folder has two separate front ends, but they are **not equivalent yet**:
+
+- **UI version (`gui.cpp`)** — the AI-generated raylib graph builder. It is useful for constructing weighted graphs visually and will become the visualization layer for Kruskal.
+- **CLI version (`main.cpp`)** — reserved for the author's hand-written Kruskal implementation. It is currently a placeholder.
+
+Unlike Stack and Queue, the CLI core is not implemented and the UI is not a copy of it; the UI is currently a graph builder, not an MST visualizer. See [Current algorithm status](#current-algorithm-status) for details.
+
 ## Files
 
 | File | Purpose | Status |

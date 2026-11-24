@@ -2,6 +2,8 @@
 
 > Part of the [Data Structures and Algorithms in C++](../../README.md) collection.
 
+> **Version:** CLI only. This folder does not include a UI version.
+
 ## Overview
 
 A **circular linked list** is a singly linked list whose last node points back to the first node instead of storing `NULL`. Starting from `head`, a traversal never reaches a null pointer; it eventually returns to `head`. That makes it possible to walk the list repeatedly without restarting from the beginning.

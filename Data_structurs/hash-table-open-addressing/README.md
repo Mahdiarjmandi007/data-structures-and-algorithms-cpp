@@ -2,6 +2,8 @@
 
 > Part of the [Data Structures and Algorithms in C++](../../README.md) collection.
 
+> **Version:** CLI only. This folder does not include a UI version.
+
 ## Overview
 
 A **hash table** stores key-value pairs and uses a hash function to map a key to an array index. When two keys map to the same index, a **collision** occurs. This implementation resolves collisions with **open addressing** and **linear probing**: if a slot is occupied, the insertion tries the next slot, then the next, wrapping around at the end of the table.

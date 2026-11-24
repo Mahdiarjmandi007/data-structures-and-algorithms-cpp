@@ -2,6 +2,8 @@
 
 > Part of the [Data Structures and Algorithms in C++](../../README.md) collection.
 
+> **Version:** CLI only. This folder does not include a UI version.
+
 ## Overview
 
 **Binary search** finds a target value in a **sorted** array by repeatedly cutting the search interval in half. It compares the target with the middle element:

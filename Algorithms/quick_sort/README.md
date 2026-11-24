@@ -2,6 +2,8 @@
 
 > Part of the [Data Structures and Algorithms in C++](../../README.md) collection.
 
+> **Version:** CLI only. This folder does not include a UI version.
+
 ## Overview
 
 **Quick sort** is a divide-and-conquer sorting algorithm. It chooses a **pivot**, partitions the array so that elements smaller than the pivot are on its left and larger elements are on its right, then recursively sorts the two partitions.

@@ -1,3 +1,4 @@
+
 ![C++](https://img.shields.io/badge/C%2B%2B-17-blue)
 ![License](https://img.shields.io/badge/license-MIT-green)
 
@@ -22,25 +23,49 @@ I used AI for the UI because this is an educational repository: the goal is to l
 - Any contribution that includes AI-generated code must **say so in the pull request**.
 - Algorithm contributions should be explainable, tested, and consistent with the educational purpose of the repository.
 
+## Two Versions: CLI and UI
+
+Some folders provide two completely separate versions:
+
+- **CLI version:** the original console program, written by the author without AI. It is the reference implementation and the best place to study the actual code: functions, arrays, indices, control flow, and edge cases.
+- **UI version:** a separate raylib program, generated entirely with AI. In the completed pairs (Stack and Queue), it uses an exact copy of the CLI operations to visualize them. It is the best place to build intuition: push/pop, enqueue/dequeue, animations, overflow, front/rear, and wrap-around.
+
+The two versions are independent:
+
+- separate source files (`*.cpp` vs `gui.cpp`);
+- separate executables (`*.exe` vs `gui.exe`);
+- no runtime dependency between them;
+- for Stack and Queue, the UI uses a header copy (`stack.h` / `queue.h`) of the CLI functions, so behavior stays the same.
+
+The **CLI version** exists to understand **how the data structure or algorithm is implemented in code**. The **UI version** exists to understand **what the data structure does visually**, which makes learning and explaining it easier. A good workflow is to use the UI first to build intuition, then read the CLI code to see how that behavior is implemented.
+
+Which versions are available?
+
+- **Stack** and **Queue:** both CLI and UI.
+- **Kruskal** and **Prim:** UI graph builder; their CLI algorithm cores are still pending.
+- **Other folders:** CLI only.
+
+**No AI was used for the CLI versions.** The Stack and Queue UI versions are AI-generated copies created for visualization. The Kruskal and Prim UI is an AI-generated graph-builder shell; their algorithm cores are still pending.
+
 ## Contents
 
 **To use any algorithm or data structure, read the `README.md` inside its folder.** This main README is only an index. Each folder README contains the build/run instructions, usage guide, code walkthrough, complexity, and limitations.
 
 ### Data Structures
 
-- [Circular Linked List](Data_structurs/circular-linked-list/README.md)
-- [Complete Binary Tree](Data_structurs/complete-binary-tree/README.md)
-- [Hash Table (Open Addressing)](Data_structurs/hash-table-open-addressing/README.md)
-- [Heap (Min and Max)](Data_structurs/heap/README.md)
-- [Queue (Circular Array)](Data_structurs/queue/README.md)
-- [Stack (Array)](Data_structurs/stack/README.md)
+- [Circular Linked List](Data_structurs/circular-linked-list/README.md) — CLI
+- [Complete Binary Tree](Data_structurs/complete-binary-tree/README.md) — CLI
+- [Hash Table (Open Addressing)](Data_structurs/hash-table-open-addressing/README.md) — CLI
+- [Heap (Min and Max)](Data_structurs/heap/README.md) — CLI
+- [Queue (Circular Array)](Data_structurs/queue/README.md) — CLI + UI
+- [Stack (Array)](Data_structurs/stack/README.md) — CLI + UI
 
 ### Algorithms
 
-- [Binary Search](Algorithms/binary-search/README.md)
-- [Quick Sort](Algorithms/quick_sort/README.md)
-- [Kruskal's MST](Algorithms/kruskal/README.md)
-- [Prim's MST](Algorithms/prim/README.md)
+- [Binary Search](Algorithms/binary-search/README.md) — CLI
+- [Quick Sort](Algorithms/quick_sort/README.md) — CLI
+- [Kruskal's MST](Algorithms/kruskal/README.md) — UI graph builder (CLI pending)
+- [Prim's MST](Algorithms/prim/README.md) — UI graph builder (CLI pending)
 
 ## Project Structure
 
@@ -106,7 +131,7 @@ If you use it in a course or workshop, I would be happy to hear about it. This i
 
 ## Note on AI-generated UI
 
-Currently, only **Kruskal** and **Prim** have a graphical UI. The UI code in those two folders was generated with AI. All other folders are console-based.
+Currently, **Kruskal**, **Prim**, **Stack**, and **Queue** have a graphical UI. The UI code in those folders was generated with AI. The other folders are console-based.
 
 The graphical UI is currently a graph builder, not an algorithm visualizer. It allows users to create and edit graphs, but it does not execute Kruskal's or Prim's algorithm yet.
 

@@ -2,6 +2,8 @@
 
 > Part of the [Data Structures and Algorithms in C++](../../README.md) collection.
 
+> **Version:** CLI only. This folder does not include a UI version.
+
 ## Overview
 
 A **binary heap** is a complete binary tree stored in an array. It satisfies the **heap property**:

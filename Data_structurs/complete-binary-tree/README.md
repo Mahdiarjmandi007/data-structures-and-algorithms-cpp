@@ -2,6 +2,8 @@
 
 > Part of the [Data Structures and Algorithms in C++](../../README.md) collection.
 
+> **Version:** CLI only. This folder does not include a UI version.
+
 ## Overview
 
 A **complete binary tree** is a binary tree in which every level is completely filled except possibly the last level, and the last level is filled from left to right. This implementation builds such a tree from user input using **level-order insertion** and prints it as an ASCII diagram.

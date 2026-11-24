@@ -19,6 +19,15 @@ Unlike Kruskal, which sorts all edges globally, Prim focuses on the **frontier**
 
 This folder currently contains a copy of the Kruskal graph model and GUI. The actual Prim implementation is still to be written.
 
+## Two Versions
+
+This folder has two separate front ends, but they are **not equivalent yet**:
+
+- **UI version (`gui.cpp`)** — the AI-generated raylib graph builder. It is currently an unmodified copy of the Kruskal GUI and still shows Kruskal labels.
+- **CLI version (`main.cpp`)** — reserved for the author's hand-written Prim implementation. It is currently a placeholder.
+
+Unlike Stack and Queue, the CLI core is not implemented and the UI is not a copy of it; the UI is a graph builder, not a Prim visualizer. See [Current algorithm status](#current-algorithm-status) for details.
+
 ## Files
 
 | File | Purpose | Status |

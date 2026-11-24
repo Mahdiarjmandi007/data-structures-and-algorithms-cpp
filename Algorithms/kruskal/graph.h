@@ -1,10 +1,8 @@
 #pragma once
 
 #include <vector>
+#include <algorithm>
 
-// Shared graph model and operations.
-// These are the exact functions from main.cpp, moved here so that both the
-// console program and the raylib GUI use the same implementation.
 
 using namespace std;
 
@@ -18,6 +16,14 @@ struct Graph {
     int V;
     vector<Edge> edges;
 };
+
+void initialize(int vertices) {
+    parent.resize(vertices);
+
+    for (int i = 0; i < vertices; i++) {
+        parent[i] = i;
+    }
+}
 
 Graph create_graph(int number){
     Graph graph;
@@ -33,6 +39,27 @@ void add_edge(Graph& graph , int src , int dest , int weight){
     edge.weight=weight;
 
     graph.edges.push_back(edge);
+}
+
+void sort_graph(Graph& graph){
+    sort(graph.edges.begin(),
+    graph.edges.end(),
+    [](const Edge& a, const Edge& b) {return a.weight < b.weight;});
+}
+
+int find(int vertex){
+    return parent[vertex];
+}
+
+void unite(int vertex1,int vertex2){
+    if (parent[vertex1] != parent[vertex2]){
+        if (parent[vertex1] <= parent[vertex2]){
+            parent[vertex2] = parent[vertex1];
+        }
+        else {
+            parent[vertex1] = parent[vertex2];
+        }
+    }
 }
 
 bool edge_exists(Graph& graph, int src, int dest) {
