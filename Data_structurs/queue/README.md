@@ -6,15 +6,29 @@
 
 A **queue** is a linear data structure that follows **FIFO** (First In, First Out) order: the element that has been in the queue the longest is removed first. This implementation uses a **circular array** of 100 integers. Two indices, `front` and `rear`, track the two ends, and a separate `count` makes it possible to distinguish a full queue from an empty one even after the indices wrap around.
 
-The program is an interactive console menu. It displays the queue after every enqueue and dequeue, which makes the circular behavior easy to observe.
+The implementation has two front ends: the original console menu in `queue.cpp`, and a **raylib GUI** in `gui.cpp` that uses a copy of the same queue operations from `queue.h`. The GUI adds a logical queue view, a 100-slot circular-buffer map, enqueue/dequeue animations, and a clean control panel without changing the original console program.
+
+## Two Versions
+
+This folder contains two completely separate front ends:
+
+- **CLI version (`queue.cpp`)** — the original console program, written without AI. It is the reference implementation; use it to study how the circular queue is implemented in code (`front`, `rear`, `count`, modulo arithmetic, full/empty checks, menu loop).
+- **UI version (`gui.cpp` + `queue.h`)** — a separate raylib program, generated entirely with AI as a visual copy of the CLI operations. It is the best place to see **what the queue does**: FIFO order, front/rear movement, occupied slots, wrap-around, full/empty states, and animations.
+
+The two versions are independent: separate source files, separate executables (`queue.exe` vs `gui.exe`), and no runtime dependency. The CLI version is unchanged.
 
 ## Files
 
 | File | Purpose |
 | --- | --- |
-| [`queue.cpp`](queue.cpp) | Complete implementation: circular queue, operations, and menu |
+| [`queue.cpp`](queue.cpp) | Original console program: circular queue, operations, and menu (unchanged) |
+| [`queue.h`](queue.h) | Header copy of the existing queue globals and functions, used by the GUI |
+| [`gui.cpp`](gui.cpp) | raylib visualizer: logical queue, circular array map, input, and animations |
+| [`build_gui.bat`](build_gui.bat) | Windows/MinGW build script for `gui.exe` |
 
 ## Build and Run
+
+### Console version
 
 ```bash
 g++ -std=c++17 queue.cpp -o queue
@@ -28,9 +42,37 @@ g++ -std=c++17 queue.cpp -o queue.exe
 .\queue.exe
 ```
 
-> The program calls `system("cls")` directly, which works on Windows only. The `CLEAR` macro at the top of the file is defined but not used by the menu.
+> The console program calls `system("cls")` directly, which works on Windows only. The `CLEAR` macro at the top of the file is defined but not used by the menu.
+
+### GUI version
+
+The GUI uses [raylib](https://www.raylib.com/) 6.2 and MinGW-w64 on Windows:
+
+```bat
+cd Data_structurs\queue
+build_gui.bat
+gui.exe
+```
+
+If raylib is installed elsewhere, set `RAYLIB_HOME` before building:
+
+```bat
+set RAYLIB_HOME=C:\path\to\raylib
+build_gui.bat
+```
+
+The script outputs `gui.exe` in the same folder. It does not modify or rebuild the console `queue.exe`.
+
+Optional runtime flags:
+
+```bat
+gui.exe --demo          REM start with a demo queue
+gui.exe --smoke-test    REM draw 30 frames and exit
+```
 
 ## How to Use
+
+### Console menu
 
 ```text
 Menu
@@ -69,7 +111,29 @@ Queue: 30
 
 `peek()` prints `Front element: 30` and leaves the queue unchanged.
 
+### GUI
+
+The GUI shows the queue in two complementary ways:
+
+- **Logical queue:** up to ten elements in FIFO order, with the front on the left and the rear on the right.
+- **Circular array:** all 100 slots in a 10 × 10 map, showing where `front` and `rear` currently point and how the queue wraps around the end of the array.
+
+| Action | Control |
+| --- | --- |
+| Enqueue a value | Type an integer and press **Enter** or click **Enqueue** |
+| Dequeue | Click **Dequeue** or press **D** |
+| Peek | Click **Peek** or press **K** |
+| Quit | **Esc** or close the window |
+
+The **Enqueue** animation sends a card from the right side of the circular map into the new slot. **Dequeue** moves the front card out to the left and fades it. Green marks the front, orange marks the rear, and blue marks occupied slots. The right panel shows the size, front index, rear index, state (Empty / Ready / Full), and a capacity bar.
+
 ## How It Works
+
+### Shared operations
+
+The functions and globals are defined exactly as before in `queue.cpp`. `queue.h` is a copy of those definitions created for the GUI, and `gui.cpp` includes it. The GUI calls the existing `enqueue()`, `dequeue()`, `peek()`, `length()`, `isempty()`, and `is_full()` functions, and reads `queue[]`, `front`, `rear`, and `count` only to draw the current state. No queue logic was changed.
+
+`display()` is still used by the console version. The GUI draws the logical queue and the circular map instead.
 
 ### Data representation
 
@@ -157,6 +221,18 @@ while (true) {
 
 Time: **O(n)**, where `n` is the number of elements.
 
+### GUI (`gui.cpp`)
+
+The raylib program has a title bar, a logical-queue panel, a circular-array panel, a controls panel, and a status bar:
+
+- `update()` reads typed digits, the Enter/D/K keys, and the buttons. It calls the same `enqueue()`, `dequeue()`, and `peek()` functions used by the console menu.
+- `drawLanePanel()` shows up to ten elements in FIFO order. If the queue is longer, a `+N` chip represents the remaining elements.
+- `drawGridPanel()` draws all 100 array slots. `isFilledIndex()` uses `front`, `count`, and `MAX` to decide which slots are occupied; `rear` is used to highlight the newest slot. The front is green and the rear is orange.
+- Enqueue and dequeue store an `Animation` with a start and end rectangle. The animation is visual only; the data structure is updated immediately by the existing functions.
+- The GUI reads the globals for rendering. It does not reimplement or modify any queue operation.
+
+> The GUI code was generated with AI; the queue operations and console program are the author's original work. See the main [AI Assistance](../../README.md#ai-assistance) note.
+
 ## Complexity Summary
 
 | Operation | Time | Space |
@@ -170,12 +246,14 @@ Time: **O(n)**, where `n` is the number of elements.
 ## Notes and Limitations
 
 - **Fixed capacity:** the queue holds at most 100 integers; there is no resizing.
+- **GUI is a separate front end:** `gui.cpp` includes the copied operations in `queue.h`, while the original console program in `queue.cpp` remains unchanged.
+- **AI-generated UI:** the raylib interface and animations were generated with AI; the queue operations are the author's original hand-written code.
 - **Global state:** the array and indices are global variables.
-- **Dequeue does not return the removed value.** The menu only reports success/failure.
+- **Dequeue does not return the removed value.** The console menu only reports success/failure; the GUI records the front value before calling `dequeue()` so it can animate the removed card.
 - **`count` is essential:** without it, `front == rear` would be ambiguous (empty or full). This implementation uses both `count` and the `-1` reset convention.
-- **Windows-only clearing:** `system("cls")` is used directly even though a cross-platform `CLEAR` macro is defined at the top.
+- **Windows-only clearing:** the console `system("cls")` is used directly even though a cross-platform `CLEAR` macro is defined at the top. The GUI does not use either.
 - **No dynamic allocation:** the array lives for the whole program.
-- **Invalid input:** the menu handles out-of-range choices, but non-numeric input can leave `cin` in a failed state.
+- **Invalid input:** the console menu handles out-of-range choices, but non-numeric input can leave `cin` in a failed state. The GUI only accepts digits and a leading minus sign.
 - **The display is not a true queue operation:** it is a diagnostic helper that walks the logical order.
 
 ## What This Teaches
