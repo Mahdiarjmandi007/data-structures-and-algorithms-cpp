@@ -6,7 +6,7 @@
 
 A collection of fundamental data structures and algorithms implemented from scratch in C++ for learning and practice. It covers linked lists, stacks, queues, hash tables, trees, heaps, searching, sorting, and graph algorithms.
 
-> **Project status:** active learning repository. Some parts are complete, while Kruskal and Prim are still in progress; their algorithm cores are not finished yet.
+> **Project status:** active learning repository. Some parts are complete. Kruskal's algorithm and its visualizer are implemented; Prim is still in progress.
 >
 > **Contributions and teaching use are welcome.** See [Contributing, Contact, and Teaching Use](#contributing-contact-and-teaching-use).
 
@@ -42,10 +42,11 @@ The **CLI version** exists to understand **how the data structure or algorithm i
 Which versions are available?
 
 - **Stack** and **Queue:** both CLI and UI.
-- **Kruskal** and **Prim:** UI graph builder; their CLI algorithm cores are still pending.
+- **Kruskal:** UI visualizer with the implemented algorithm; the console entry point is still pending.
+- **Prim:** UI graph builder; its algorithm core is still pending.
 - **Other folders:** CLI only.
 
-**No AI was used for the CLI versions.** The Stack and Queue UI versions are AI-generated copies created for visualization. The Kruskal and Prim UI is an AI-generated graph-builder shell; their algorithm cores are still pending.
+**No AI was used for the algorithm implementations.** The Stack and Queue UI versions are AI-generated copies created for visualization. The Kruskal and Prim UI is AI-generated; Kruskal's graph model and algorithm were written by the author, while Prim's core is still pending.
 
 ## Contents
 
@@ -64,7 +65,7 @@ Which versions are available?
 
 - [Binary Search](Algorithms/binary-search/README.md) — CLI
 - [Quick Sort](Algorithms/quick_sort/README.md) — CLI
-- [Kruskal's MST](Algorithms/kruskal/README.md) — UI graph builder (CLI pending)
+- [Kruskal's MST](Algorithms/kruskal/README.md) — UI visualizer (console entry pending)
 - [Prim's MST](Algorithms/prim/README.md) — UI graph builder (CLI pending)
 
 ## Project Structure
@@ -133,7 +134,7 @@ If you use it in a course or workshop, I would be happy to hear about it. This i
 
 Currently, **Kruskal**, **Prim**, **Stack**, and **Queue** have a graphical UI. The UI code in those folders was generated with AI. The other folders are console-based.
 
-The graphical UI is currently a graph builder, not an algorithm visualizer. It allows users to create and edit graphs, but it does not execute Kruskal's or Prim's algorithm yet.
+Kruskal's UI now executes and visualizes the algorithm, including accepted and rejected edge decisions. Prim's UI is still a graph builder; its algorithm core is not implemented yet.
 
 ## License
 

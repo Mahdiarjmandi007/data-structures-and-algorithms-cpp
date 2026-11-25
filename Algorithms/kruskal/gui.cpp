@@ -5,6 +5,7 @@
 //   - startGraph()  -> create_graph()
 //   - connectEdge() -> edge_exists() + add_edge()
 //   - stats/colors  -> unuse_vertex()
+//   - MST result    -> is_connected() + kruskal()
 //
 // Build with build_gui.bat (or the VS Code task "Build Graph GUI").
 
@@ -29,6 +30,7 @@ static const int SCREEN_H = 760;
 static const float TOP_BAR_H = 88.0f;
 static const float BOTTOM_BAR_H = 64.0f;
 static const float MARGIN = 24.0f;
+static const float KRUSKAL_STEP_DELAY = 0.55f;
 
 static const Color BG           = { 15, 19, 28, 255 };
 static const Color PANEL        = { 24, 30, 43, 255 };
@@ -55,6 +57,12 @@ static const Color INFO         = { 96, 165, 250, 255 };
 enum class Screen {
     Setup,
     Builder
+};
+
+enum class ButtonStyle {
+    Default,
+    Primary,
+    Success
 };
 
 struct AppState {
@@ -88,6 +96,16 @@ struct AppState {
     string status = "Choose the number of vertices and press Enter.";
     Color statusColor = INFO;
     bool quit = false;
+
+    // Kruskal result and animation
+    bool hasKruskalResult = false;
+    vector<KruskalStep> kruskalSteps;
+    int currentStep = -1;
+    int acceptedEdgeCount = 0;
+    int totalMstWeight = 0;
+    bool kruskalConnected = false;
+    bool kruskalAnimating = false;
+    float kruskalStepTimer = 0.0f;
 
     // Automated startup check; used by: gui.exe --smoke-test
     bool smokeTest = false;
@@ -144,20 +162,32 @@ static bool buttonHovered(Rectangle rectangle) {
     return pointInRectangle(GetMousePosition(), rectangle);
 }
 
-static void drawButton(Rectangle rectangle, const string& label, bool primary,
+static void drawButton(Rectangle rectangle, const string& label, ButtonStyle style,
                        bool enabled = true, float fontSize = 20.0f) {
     bool hovered = enabled && buttonHovered(rectangle);
 
-    Color fill = primary ? ACCENT : PANEL_ALT;
+    Color fill = PANEL_ALT;
+    Color hoverFill = { 45, 57, 80, 255 };
+    Color border = BORDER;
+
+    if (style == ButtonStyle::Primary) {
+        fill = ACCENT;
+        hoverFill = ACCENT_DARK;
+        border = { 96, 165, 250, 255 };
+    } else if (style == ButtonStyle::Success) {
+        fill = { 34, 197, 94, 255 };
+        hoverFill = { 22, 163, 74, 255 };
+        border = { 74, 222, 128, 255 };
+    }
+
     if (!enabled) {
         fill = PANEL;
     } else if (hovered) {
-        fill = primary ? ACCENT_DARK : Color{ 45, 57, 80, 255 };
+        fill = hoverFill;
     }
 
     DrawRectangleRounded(rectangle, 0.28f, 8, fill);
-    DrawRectangleRoundedLinesEx(rectangle, 0.28f, 8, 1.0f,
-                                primary ? Color{ 96, 165, 250, 255 } : BORDER);
+    DrawRectangleRoundedLinesEx(rectangle, 0.28f, 8, 1.0f, border);
     drawTextCentered(label, rectangle.x + rectangle.width / 2.0f,
                      rectangle.y + (rectangle.height - fontSize) / 2.0f - 1.0f,
                      fontSize, enabled ? TEXT : MUTED, true);
@@ -217,6 +247,10 @@ static void loadFonts() {
 
 static Rectangle newGraphButton() {
     return Rectangle{ SCREEN_W - 184.0f, 24.0f, 152.0f, 40.0f };
+}
+
+static Rectangle runKruskalButton() {
+    return Rectangle{ SCREEN_W - 360.0f, 24.0f, 156.0f, 40.0f };
 }
 
 static Rectangle setupPanel() {
@@ -291,6 +325,17 @@ static void rebuildLayout(int count) {
     app.nodeRadius = clampf(gap * 0.34f, 14.0f, 24.0f);
 }
 
+static void clearKruskalResult() {
+    app.hasKruskalResult = false;
+    app.kruskalSteps.clear();
+    app.currentStep = -1;
+    app.acceptedEdgeCount = 0;
+    app.totalMstWeight = 0;
+    app.kruskalConnected = false;
+    app.kruskalAnimating = false;
+    app.kruskalStepTimer = 0.0f;
+}
+
 static void startGraph(int count) {
     count = (int)clampf((float)count, 1.0f, 30.0f);
 
@@ -298,6 +343,7 @@ static void startGraph(int count) {
     app.graph = create_graph(count);
     app.vertexCount = count;
     app.unusedVertices = unuse_vertex(app.graph);
+    clearKruskalResult();
 
     app.selectedSource = -1;
     app.pendingDest = -1;
@@ -316,6 +362,7 @@ static void startGraph(int count) {
 static void openSetup() {
     app.screen = Screen::Setup;
     app.countInput = to_string(app.vertexCount > 0 ? app.vertexCount : 6);
+    clearKruskalResult();
 
     app.selectedSource = -1;
     app.pendingDest = -1;
@@ -384,6 +431,7 @@ static void confirmEdge() {
     // The only place where a new edge is added: the shared function.
     add_edge(app.graph, source, dest, weight);
     app.unusedVertices = unuse_vertex(app.graph);
+    clearKruskalResult();
 
     setStatus("Edge " + to_string(source) + " - " + to_string(dest) +
               " added with weight " + to_string(weight) + ".", SUCCESS);
@@ -406,6 +454,92 @@ static int nodeAt(Vector2 point) {
         }
     }
     return -1;
+}
+
+// ---------------------------------------------------------------------------
+// Kruskal result
+// ---------------------------------------------------------------------------
+
+static string kruskalSummary() {
+    return to_string(app.acceptedEdgeCount) + " MST edges, total weight " +
+           to_string(app.totalMstWeight) + " (" +
+           to_string(app.kruskalSteps.size()) + " edges checked)";
+}
+
+static void setCurrentStepStatus() {
+    if (app.currentStep < 0 || app.currentStep >= (int)app.kruskalSteps.size()) {
+        return;
+    }
+
+    const KruskalStep& step = app.kruskalSteps[app.currentStep];
+    string message = "Kruskal: step " + to_string(app.currentStep + 1) + "/" +
+                     to_string(app.kruskalSteps.size()) + " - edge " +
+                     to_string(step.edge.src) + "-" + to_string(step.edge.dest) +
+                     (step.status == 1 ? " accepted." : " rejected (cycle).");
+
+    setStatus(message, step.status == 1 ? SUCCESS : ERROR);
+}
+
+static void runKruskal() {
+    clearKruskalResult();
+    app.selectedSource = -1;
+    app.pendingDest = -1;
+
+    // Kruskal needs a connected graph. Do not run on a disconnected graph.
+    app.kruskalConnected = is_connected(app.graph);
+    if (!app.kruskalConnected) {
+        setStatus("Kruskal not started: the graph is not connected. "
+                  "Connect all vertices first.", ERROR);
+        return;
+    }
+
+    // Only the shared graph function computes the decisions.
+    app.kruskalSteps = kruskal(app.graph);
+    app.hasKruskalResult = true;
+
+    app.acceptedEdgeCount = 0;
+    app.totalMstWeight = 0;
+    for (const KruskalStep& step : app.kruskalSteps) {
+        if (step.status == 1) {
+            app.acceptedEdgeCount++;
+            app.totalMstWeight += step.edge.weight;
+        }
+    }
+
+    app.kruskalStepTimer = 0.0f;
+
+    if (app.kruskalSteps.empty()) {
+        app.currentStep = -1;
+        app.kruskalAnimating = false;
+        setStatus("Kruskal: 0 edges, total weight 0.", SUCCESS);
+    } else {
+        // The first decision is shown immediately.
+        app.currentStep = 0;
+        app.kruskalAnimating = true;
+        setCurrentStepStatus();
+    }
+}
+
+static void advanceKruskalAnimation() {
+    if (!app.hasKruskalResult || !app.kruskalAnimating) {
+        return;
+    }
+
+    app.kruskalStepTimer += GetFrameTime();
+    if (app.kruskalStepTimer < KRUSKAL_STEP_DELAY) {
+        return;
+    }
+
+    app.kruskalStepTimer -= KRUSKAL_STEP_DELAY;
+
+    if (app.currentStep + 1 < (int)app.kruskalSteps.size()) {
+        app.currentStep++;
+        setCurrentStepStatus();
+    } else {
+        app.currentStep = -1;
+        app.kruskalAnimating = false;
+        setStatus("Kruskal finished: " + kruskalSummary() + ".", SUCCESS);
+    }
 }
 
 // ---------------------------------------------------------------------------
@@ -534,6 +668,13 @@ static void updateBuilder() {
         return;
     }
 
+    if (buttonClicked(runKruskalButton()) || IsKeyPressed(KEY_K)) {
+        runKruskal();
+        return;
+    }
+
+    advanceKruskalAnimation();
+
     if (IsKeyPressed(KEY_ESCAPE) || IsMouseButtonPressed(MOUSE_BUTTON_RIGHT)) {
         if (app.selectedSource != -1) {
             app.selectedSource = -1;
@@ -587,7 +728,7 @@ static void updateBuilder() {
         }
     }
 
-    if (buttonHovered(newGraphButton()) || hovered >= 0) {
+    if (buttonHovered(newGraphButton()) || buttonHovered(runKruskalButton()) || hovered >= 0) {
         SetMouseCursor(MOUSE_CURSOR_POINTING_HAND);
     } else {
         SetMouseCursor(MOUSE_CURSOR_DEFAULT);
@@ -636,13 +777,13 @@ static void drawSetup() {
                       (int)(input.y + 18.0f), 2, 30, ACCENT);
     }
 
-    drawButton(setupMinusButton(), "-", false, true, 30.0f);
-    drawButton(setupPlusButton(), "+", false, true, 30.0f);
+    drawButton(setupMinusButton(), "-", ButtonStyle::Default, true, 30.0f);
+    drawButton(setupPlusButton(), "+", ButtonStyle::Default, true, 30.0f);
 
     drawTextCentered("1 - 30 vertices", SCREEN_W / 2.0f, input.y + input.height + 14.0f,
                      16.0f, MUTED);
 
-    drawButton(setupCreateButton(), "Create Graph", true, true, 22.0f);
+    drawButton(setupCreateButton(), "Create Graph", ButtonStyle::Primary, true, 22.0f);
 
     drawTextCentered("Press Enter to create  |  Esc to quit",
                      SCREEN_W / 2.0f, panel.y + panel.height - 32.0f, 15.0f, MUTED);
@@ -659,7 +800,8 @@ static void drawSetup() {
              SCREEN_H - 38.0f, 14.0f, ACCENT, true);
 }
 
-static void drawEdgeWeight(const Edge& edge, Vector2 from, Vector2 to, bool active) {
+static void drawEdgeWeight(const Edge& edge, Vector2 from, Vector2 to,
+                           bool highlighted, Color highlight, bool faded) {
     float dx = to.x - from.x;
     float dy = to.y - from.y;
     float length = sqrtf(dx * dx + dy * dy);
@@ -686,10 +828,85 @@ static void drawEdgeWeight(const Edge& edge, Vector2 from, Vector2 to, bool acti
         26.0f
     };
 
-    DrawRectangleRounded(pill, 0.5f, 8, PANEL);
-    DrawRectangleRoundedLinesEx(pill, 0.5f, 8, 1.0f, active ? SELECTED : BORDER);
+    Color pillColor = faded ? Fade(PANEL, 0.65f) : PANEL;
+    Color borderColor = highlighted ? highlight : (faded ? Fade(BORDER, 0.35f) : BORDER);
+    Color textColor = highlighted ? highlight : (faded ? Fade(TEXT, 0.30f) : TEXT);
+
+    DrawRectangleRounded(pill, 0.5f, 8, pillColor);
+    DrawRectangleRoundedLinesEx(pill, 0.5f, 8, 1.0f, borderColor);
     drawTextCentered(text, middle.x, middle.y - fontSize / 2.0f - 1.0f,
-                     fontSize, active ? SELECTED : TEXT, true);
+                     fontSize, textColor, true);
+}
+
+static void drawGraphEdge(const Edge& edge, bool highlighted, Color highlight, bool faded) {
+    Vector2 from = app.positions[edge.src];
+    Vector2 to = app.positions[edge.dest];
+
+    Color lineColor = highlighted ? highlight
+                                 : (faded ? Fade(EDGE_COLOR, 0.35f) : EDGE_COLOR);
+
+    DrawLineEx(from, to, highlighted ? 7.0f : 5.0f, PANEL);
+    DrawLineEx(from, to, highlighted ? 4.5f : 2.5f, lineColor);
+    drawEdgeWeight(edge, from, to, highlighted, highlight, faded);
+}
+
+static int stepIndexForEdge(const Edge& edge) {
+    for (int i = 0; i < (int)app.kruskalSteps.size(); i++) {
+        const Edge& stepEdge = app.kruskalSteps[i].edge;
+        if ((stepEdge.src == edge.src && stepEdge.dest == edge.dest) ||
+            (stepEdge.src == edge.dest && stepEdge.dest == edge.src)) {
+            return i;
+        }
+    }
+    return -1;
+}
+
+static void drawKruskalPanel() {
+    if (!app.hasKruskalResult) {
+        return;
+    }
+
+    Rectangle panel = { MARGIN, TOP_BAR_H + 16.0f, 320.0f, 108.0f };
+    DrawRectangleRounded(panel, 0.07f, 10, Fade(PANEL, 0.96f));
+    DrawRectangleRoundedLinesEx(panel, 0.07f, 10, 1.0f, BORDER);
+
+    drawText("Kruskal result", panel.x + 14.0f, panel.y + 10.0f, 18.0f, TEXT, true);
+
+    int totalSteps = (int)app.kruskalSteps.size();
+    int upto = app.kruskalAnimating ? app.currentStep : totalSteps - 1;
+    int acceptedSoFar = 0;
+    int weightSoFar = 0;
+
+    for (int i = 0; i <= upto && i < totalSteps; i++) {
+        if (app.kruskalSteps[i].status == 1) {
+            acceptedSoFar++;
+            weightSoFar += app.kruskalSteps[i].edge.weight;
+        }
+    }
+
+    int stepNumber = app.kruskalAnimating ? app.currentStep + 1 : totalSteps;
+    drawText("Step: " + to_string(stepNumber) + " / " + to_string(totalSteps),
+             panel.x + 14.0f, panel.y + 36.0f, 16.0f, MUTED);
+
+    drawText("MST edges: " + to_string(acceptedSoFar) +
+             "    Weight: " + to_string(weightSoFar),
+             panel.x + 14.0f, panel.y + 58.0f, 17.0f, TEXT, true);
+
+    string state;
+    Color stateColor;
+    if (app.kruskalAnimating && app.currentStep >= 0 && app.currentStep < totalSteps) {
+        const KruskalStep& step = app.kruskalSteps[app.currentStep];
+        state = "Edge " + to_string(step.edge.src) + "-" + to_string(step.edge.dest) +
+                (step.status == 1 ? " accepted" : " rejected (cycle)");
+        stateColor = step.status == 1 ? SUCCESS : ERROR;
+    } else if (app.kruskalConnected) {
+        state = "Minimum spanning tree";
+        stateColor = SUCCESS;
+    } else {
+        state = "Spanning forest (disconnected)";
+        stateColor = SELECTED;
+    }
+    drawText(state, panel.x + 14.0f, panel.y + 82.0f, 14.0f, stateColor);
 }
 
 static void drawBuilder() {
@@ -707,22 +924,66 @@ static void drawBuilder() {
     string stats = "Vertices: " + to_string(app.vertexCount) +
                    "     Edges: " + to_string(app.graph.edges.size()) +
                    "     Isolated: " + to_string(app.unusedVertices.size());
-    drawText(stats, 500.0f, 34.0f, 18.0f, MUTED);
+    drawText(stats, 330.0f, 34.0f, 17.0f, MUTED);
 
-    drawButton(newGraphButton(), "New Graph", false, true, 18.0f);
+    drawButton(runKruskalButton(), "Run Kruskal", ButtonStyle::Success, true, 18.0f);
+    drawButton(newGraphButton(), "New Graph", ButtonStyle::Default, true, 18.0f);
 
     // Edges -----------------------------------------------------------------
-    for (const Edge& edge : app.graph.edges) {
-        Vector2 from = app.positions[edge.src];
-        Vector2 to = app.positions[edge.dest];
+    bool hasResult = app.hasKruskalResult;
 
-        bool active = app.selectedSource != -1 &&
-                      (edge.src == app.selectedSource || edge.dest == app.selectedSource);
+    // Draw all edges first, except the ones that will be highlighted on top.
+    for (int i = 0; i < (int)app.graph.edges.size(); i++) {
+        const Edge& edge = app.graph.edges[i];
+        int stepIndex = hasResult ? stepIndexForEdge(edge) : -1;
 
-        DrawLineEx(from, to, active ? 7.0f : 5.0f, PANEL);
-        DrawLineEx(from, to, active ? 4.0f : 2.5f, active ? SELECTED : EDGE_COLOR);
+        bool acceptedHighlighted = false;
+        bool currentRejected = false;
 
-        drawEdgeWeight(edge, from, to, active);
+        if (stepIndex >= 0) {
+            const KruskalStep& step = app.kruskalSteps[stepIndex];
+
+            if (step.status == 1) {
+                if (!app.kruskalAnimating) {
+                    acceptedHighlighted = true;      // finished: all accepted edges are green
+                } else if (stepIndex <= app.currentStep) {
+                    acceptedHighlighted = true;      // past or current accepted edge
+                }
+            } else if (app.kruskalAnimating && stepIndex == app.currentStep) {
+                currentRejected = true;              // red only for this step
+            }
+        }
+
+        if (acceptedHighlighted || currentRejected) {
+            continue;
+        }
+
+        bool selected = !hasResult && app.selectedSource != -1 &&
+                        (edge.src == app.selectedSource || edge.dest == app.selectedSource);
+        drawGraphEdge(edge, selected, SELECTED, hasResult);
+    }
+
+    // Highlight the current decision and the accepted edges on top.
+    if (hasResult) {
+        if (!app.kruskalAnimating) {
+            for (const KruskalStep& step : app.kruskalSteps) {
+                if (step.status == 1) {
+                    drawGraphEdge(step.edge, true, SUCCESS, false);
+                }
+            }
+        } else {
+            for (int i = 0; i <= app.currentStep && i < (int)app.kruskalSteps.size(); i++) {
+                const KruskalStep& step = app.kruskalSteps[i];
+
+                if (step.status == 1) {
+                    bool current = (i == app.currentStep);
+                    drawGraphEdge(step.edge, true, current ? SELECTED : SUCCESS, false);
+                } else if (i == app.currentStep) {
+                    // Rejected edge is red only while its step is current.
+                    drawGraphEdge(step.edge, true, ERROR, false);
+                }
+            }
+        }
     }
 
     // Pending connection ----------------------------------------------------
@@ -773,6 +1034,9 @@ static void drawBuilder() {
                          labelSize, labelColor, true);
     }
 
+    // Kruskal result panel --------------------------------------------------
+    drawKruskalPanel();
+
     // Bottom bar ------------------------------------------------------------
     int bottomY = SCREEN_H - (int)BOTTOM_BAR_H;
     DrawRectangle(0, bottomY, SCREEN_W, (int)BOTTOM_BAR_H, PANEL);
@@ -782,7 +1046,7 @@ static void drawBuilder() {
     drawText(app.status, 48.0f, (float)bottomY + 13.0f, 19.0f, TEXT);
 
     drawText("Drag to move  |  Click two vertices to add an edge  |  "
-             "Right-click / Esc to cancel  |  N: new graph",
+             "Right-click / Esc to cancel  |  K: run Kruskal  |  N: new graph",
              24.0f, (float)bottomY + 39.0f, 14.0f, MUTED);
 
     drawText("Gray vertex = no edges", 24.0f, (float)bottomY - 26.0f, 14.0f, MUTED);
@@ -823,8 +1087,8 @@ static void drawBuilder() {
 
         drawText("Enter a positive integer", input.x, input.y + 66.0f, 14.0f, MUTED);
 
-        drawButton(dialogAddButton(), "Add Edge", true, true, 20.0f);
-        drawButton(dialogCancelButton(), "Cancel", false, true, 20.0f);
+        drawButton(dialogAddButton(), "Add Edge", ButtonStyle::Primary, true, 20.0f);
+        drawButton(dialogCancelButton(), "Cancel", ButtonStyle::Default, true, 20.0f);
 
         drawTextCentered("Enter: add  |  Esc: cancel",
                          SCREEN_W / 2.0f, panel.y + panel.height - 22.0f, 14.0f, MUTED);
@@ -865,10 +1129,10 @@ int main(int argc, char** argv) {
         app.unusedVertices = unuse_vertex(app.graph);
 
         if (app.smokeTest) {
-            app.selectedSource = 0;
-            setStatus("Smoke test mode: graph drawn with 6 edges.", INFO);
+            // Exercise the shared Kruskal function and the result rendering.
+            runKruskal();
         } else {
-            setStatus("Demo graph: 6 vertices, 6 edges. Drag vertices or add more edges.", INFO);
+            setStatus("Demo graph: 6 vertices, 6 edges. Click Run Kruskal or press K.", INFO);
         }
     }
 
