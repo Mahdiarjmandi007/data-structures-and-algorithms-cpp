@@ -652,6 +652,11 @@ static void drawSetup() {
 
     drawTextCentered("raylib 6.2  |  graph operations from graph.h",
                      SCREEN_W / 2.0f, SCREEN_H - 38.0f, 14.0f, Color{ 100, 116, 139, 255 });
+
+    const string complexity = "Prim (planned): O(E log V)";
+    float complexityWidth = measureText(complexity, 14.0f, true);
+    drawText(complexity, SCREEN_W - complexityWidth - 24.0f,
+             SCREEN_H - 38.0f, 14.0f, ACCENT, true);
 }
 
 static void drawEdgeWeight(const Edge& edge, Vector2 from, Vector2 to, bool active) {
@@ -781,6 +786,11 @@ static void drawBuilder() {
              24.0f, (float)bottomY + 39.0f, 14.0f, MUTED);
 
     drawText("Gray vertex = no edges", 24.0f, (float)bottomY - 26.0f, 14.0f, MUTED);
+
+    const string complexity = "Prim (planned): O(E log V)";
+    float complexityWidth = measureText(complexity, 15.0f, true);
+    drawText(complexity, SCREEN_W - complexityWidth - 24.0f,
+             (float)bottomY + 22.0f, 15.0f, ACCENT, true);
 
     // Weight dialog ---------------------------------------------------------
     if (app.weightDialog) {

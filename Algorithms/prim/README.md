@@ -28,6 +28,12 @@ This folder has two separate front ends, but they are **not equivalent yet**:
 
 Unlike Stack and Queue, the CLI core is not implemented and the UI is not a copy of it; the UI is a graph builder, not a Prim visualizer. See [Current algorithm status](#current-algorithm-status) for details.
 
+## Preview
+
+![Prim graph-builder UI](screenshot.png)
+
+*The current UI is still the Kruskal graph-builder copy, so it shows Kruskal labels; Prim-specific controls are pending. The bottom-right badge shows the planned complexity.*
+
 ## Files
 
 | File | Purpose | Status |

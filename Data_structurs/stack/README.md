@@ -17,6 +17,12 @@ This folder contains two completely separate front ends:
 
 The two versions are independent: separate source files, separate executables (`stack.exe` vs `gui.exe`), and no runtime dependency. The CLI version is unchanged.
 
+## Preview
+
+![Stack push and pop animation](demo.gif)
+
+*Push and pop animation in the UI version. The bottom-right corner shows the operation complexity.*
+
 ## Files
 
 | File | Purpose |

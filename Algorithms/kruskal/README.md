@@ -29,6 +29,12 @@ This folder has two separate front ends, but they are **not equivalent yet**:
 
 Unlike Stack and Queue, the CLI core is not implemented and the UI is not a copy of it; the UI is currently a graph builder, not an MST visualizer. See [Current algorithm status](#current-algorithm-status) for details.
 
+## Preview
+
+![Kruskal graph-builder UI](screenshot.png)
+
+*Current graph-builder UI. The Kruskal algorithm itself is still pending; the bottom-right badge shows the expected complexity.*
+
 ## Files
 
 | File | Purpose | Status |

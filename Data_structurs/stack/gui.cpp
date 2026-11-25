@@ -585,6 +585,11 @@ static void drawBottomBar() {
 
     drawText("Click a button or use the keyboard  |  Esc to quit",
              24.0f, (float)bottomY + 37.0f, 16.0f, MUTED);
+
+    const string complexity = "push / pop / peek: O(1)";
+    float complexityWidth = measureText(complexity, 15.0f, true);
+    drawText(complexity, SCREEN_W - complexityWidth - 24.0f,
+             (float)bottomY + 21.0f, 15.0f, ACCENT, true);
 }
 
 static void draw() {
